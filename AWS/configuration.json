@@ -1,0 +1,6 @@
+{
+    "lambdaRole":"arn:aws:iam::...:role/LabRole",
+    "region": "us-west-2",
+    "dynamoDBtable": "rekognitionAnalyzeDB",
+    "s3BucketName": "rekognition-..."
+    }
