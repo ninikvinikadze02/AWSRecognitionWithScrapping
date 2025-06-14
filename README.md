@@ -26,7 +26,6 @@ The system is designed to automatically collect images from MyAuto.ge, analyze t
   - AWS Lambda
   - AWS Rekognition
   - AWS S3
-  - AWS EventBridge
 
 ## Setup Instructions
 
@@ -63,8 +62,6 @@ AWSRecognitionWithScrapping/
 │   └── scraper/
 │       ├── scraper.py
 │       └── requirements.txt
-├── tests/
-├── .env.example
 ├── README.md
 └── requirements.txt
 ```
@@ -88,7 +85,7 @@ AWSRecognitionWithScrapping/
        - DYNAMO_DB_TABLE: rekognitionAnalyzeDB
        - REKOGNITION_SNS_TOPIC_ARN: [Your SNS Topic ARN]
    - Add S3 trigger:
-     - Source bucket: rekognition-car-images
+     - Source bucket: [Your S3 Bucket Name]
      - Event types: All object create events
      - Prefix: (leave empty to process all images)
      - Suffix: .jpg
@@ -106,7 +103,7 @@ AWSRecognitionWithScrapping/
          "lambdaRole": "arn:aws:iam::[YOUR_ACCOUNT_ID]:role/[YOUR_ROLE_NAME]",
          "region": "us-west-2",
          "dynamoDBtable": "rekognitionAnalyzeDB",
-         "s3BucketName": "rekognition-car-images"
+         "s3BucketName": "[Your S3 Bucket Name]"
      }
      ```
 
