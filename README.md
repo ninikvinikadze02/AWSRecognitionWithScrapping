@@ -71,15 +71,55 @@ AWSRecognitionWithScrapping/
 
 ## Usage
 
-### Run Scrapper code :
-'''
-python Scrapping/myauto_scrapper.py --s3-bucket rekognition-car-images --pages 1 --output-dir car_images
-'''
-1. Deploy the Lambda function
+1. Create S3 Bucket:
+   ```bash
+   # Create a new S3 bucket for storing car images
+   aws s3 mb s3://rekognition-car-images --region us-west-2
+   ```
 
-2. Configure EventBridge rules
+2. Set up Lambda Function:
+   - Create a new Lambda function in AWS Console
+   - Set the runtime to Python 3.9
+   - Upload the `lambda_handler.py` code
+   - Configure the following settings:
+     - Memory: 256 MB
+     - Timeout: 5 minutes
+     - Environment variables:
+       - DYNAMO_DB_TABLE: rekognitionAnalyzeDB
+       - REKOGNITION_SNS_TOPIC_ARN: [Your SNS Topic ARN]
+   - Add S3 trigger:
+     - Source bucket: rekognition-car-images
+     - Event types: All object create events
+     - Prefix: (leave empty to process all images)
+     - Suffix: .jpg
 
-3. Monitor the process
+3. Configure IAM Role:
+   - Create a new IAM role for Lambda
+   - Attach the following policies:
+     - AWSLambdaBasicExecutionRole
+     - AmazonRekognitionFullAccess
+     - AmazonS3ReadOnlyAccess
+     - AmazonDynamoDBFullAccess
+   - Update the `configuration.json` with the role ARN:
+     ```json
+     {
+         "lambdaRole": "arn:aws:iam::[YOUR_ACCOUNT_ID]:role/[YOUR_ROLE_NAME]",
+         "region": "us-west-2",
+         "dynamoDBtable": "rekognitionAnalyzeDB",
+         "s3BucketName": "rekognition-car-images"
+     }
+     ```
+
+4. Run the Scraper:
+   ```bash
+   python Scrapping/myauto_scrapper.py --s3-bucket rekognition-car-images --pages 1 --output-dir car_images
+   ```
+
+5. Monitor the Process:
+   - Check S3 bucket for uploaded images
+   - Monitor Lambda function logs in CloudWatch
+   - View results in DynamoDB table
+   - Check SNS notifications for completion status
 
 ## Contact
 
