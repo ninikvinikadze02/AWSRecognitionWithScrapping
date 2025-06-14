@@ -22,10 +22,13 @@ The system is designed to automatically collect images from MyAuto.ge, analyze t
 
 - Python 3.8 or higher
 - AWS Account with appropriate permissions
+- Serverless Framework CLI
 - Required AWS services:
   - AWS Lambda
   - AWS Rekognition
   - AWS S3
+  - AWS SNS
+  - AWS DynamoDB
 
 ## Setup Instructions
 
@@ -38,6 +41,7 @@ The system is designed to automatically collect images from MyAuto.ge, analyze t
 2. Install dependencies:
    ```bash
    pip install -r requirements.txt
+   npm install -g serverless
    ```
 
 3. Configure AWS credentials:
@@ -51,10 +55,51 @@ The system is designed to automatically collect images from MyAuto.ge, analyze t
    # Edit .env with your configuration
    ```
 
+5. Configure serverless deployment:
+   - Update `configuration.json` with your AWS account details:
+     ```json
+     {
+         "lambdaRole": "arn:aws:iam::[YOUR_ACCOUNT_ID]:role/[YOUR_ROLE_NAME]",
+         "region": "us-west-2",
+         "dynamoDBtable": "rekognitionAnalyzeDB",
+         "s3BucketName": "[Your S3 Bucket Name]"
+     }
+     ```
+
+## Deployment
+
+1. Deploy the serverless application:
+   ```bash
+   serverless deploy
+   ```
+
+2. The deployment will create:
+   - Lambda functions for image processing and label detection
+   - SNS topic for Rekognition notifications
+   - DynamoDB table for storing results
+   - Required IAM roles and permissions
+
+## Lambda Functions
+
+The application includes two main Lambda functions:
+
+1. `startProcessingMedia`: Triggered by S3 events when new images are uploaded
+   - Processes .jpeg, .png, and .mp4 files
+   - Initiates AWS Rekognition analysis
+   - Sends results to SNS topic
+
+2. `handleLabelDetection`: Triggered by SNS notifications
+   - Processes Rekognition results
+   - Stores analysis in DynamoDB
+   - Handles completion status
+
 ## Project Structure
 
 ```
 AWSRecognitionWithScrapping/
+├── AWS/
+│   ├── serverless.yml
+│   └── handler.py
 ├── src/
 │   ├── lambda/
 │   │   ├── handler.py
@@ -68,51 +113,12 @@ AWSRecognitionWithScrapping/
 
 ## Usage
 
-1. Create S3 Bucket:
-   ```bash
-   # Create a new S3 bucket for storing car images
-   aws s3 mb s3://rekognition-car-images --region us-west-2
-   ```
-
-2. Set up Lambda Function:
-   - Create a new Lambda function in AWS Console
-   - Set the runtime to Python 3.9
-   - Upload the `lambda_handler.py` code
-   - Configure the following settings:
-     - Memory: 256 MB
-     - Timeout: 5 minutes
-     - Environment variables:
-       - DYNAMO_DB_TABLE: rekognitionAnalyzeDB
-       - REKOGNITION_SNS_TOPIC_ARN: [Your SNS Topic ARN]
-   - Add S3 trigger:
-     - Source bucket: [Your S3 Bucket Name]
-     - Event types: All object create events
-     - Prefix: (leave empty to process all images)
-     - Suffix: .jpg
-
-3. Configure IAM Role:
-   - Create a new IAM role for Lambda
-   - Attach the following policies:
-     - AWSLambdaBasicExecutionRole
-     - AmazonRekognitionFullAccess
-     - AmazonS3ReadOnlyAccess
-     - AmazonDynamoDBFullAccess
-   - Update the `configuration.json` with the role ARN:
-     ```json
-     {
-         "lambdaRole": "arn:aws:iam::[YOUR_ACCOUNT_ID]:role/[YOUR_ROLE_NAME]",
-         "region": "us-west-2",
-         "dynamoDBtable": "rekognitionAnalyzeDB",
-         "s3BucketName": "[Your S3 Bucket Name]"
-     }
-     ```
-
-4. Run the Scraper:
+1. Run the Scraper:
    ```bash
    python Scrapping/myauto_scrapper.py --s3-bucket rekognition-car-images --pages 1 --output-dir car_images
    ```
 
-5. Monitor the Process:
+2. Monitor the Process:
    - Check S3 bucket for uploaded images
    - Monitor Lambda function logs in CloudWatch
    - View results in DynamoDB table

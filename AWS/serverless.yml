@@ -13,41 +13,41 @@
 
 service: rekognition
 
-frameworkVersion: '3'
+frameworkVersion: '4'
 
 provider:
   name: aws
   runtime: python3.9
-  region: ${file(../configuration.json):region}
+  region: ${file(configuration.json):region}
   environment:
-    DYNAMO_DB_TABLE: ${file(../configuration.json):dynamoDBtable}
+    DYNAMO_DB_TABLE: ${file(configuration.json):dynamoDBtable}
     REKOGNITION_SNS_TOPIC_ARN: ${self:custom.rekognitionSNSTopicArn}
-    REKOGNITION_ROLE_ARN: ${file(../configuration.json):lambdaRole}
+    REKOGNITION_ROLE_ARN: ${file(configuration.json):lambdaRole}
 
 functions:
   startProcessingMedia:
     handler: handler.start_processing_media
-    role: ${file(../configuration.json):lambdaRole}
+    role: ${file(configuration.json):lambdaRole}
     events:
       - s3:
-          bucket: ${file(../configuration.json):s3BucketName}
+          bucket: ${file(configuration.json):s3BucketName}
           event: s3:ObjectCreated:*
           rules:
             - suffix: .mp4
       - s3:
-          bucket: ${file(../configuration.json):s3BucketName}
+          bucket: ${file(configuration.json):s3BucketName}
           event: s3:ObjectCreated:*
           rules:
             - suffix: .jpeg
       - s3:
-          bucket: ${file(../configuration.json):s3BucketName}
+          bucket: ${file(configuration.json):s3BucketName}
           event: s3:ObjectCreated:*
           rules:
             - suffix: .png
 
   handleLabelDetection:
     handler: handler.handle_label_detection
-    role: ${file(../configuration.json):lambdaRole}
+    role: ${file(configuration.json):lambdaRole}
     events:
       - sns: willNotifyWhenRekognitionDone    
 
@@ -67,7 +67,7 @@ resources:
     myTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: ${file(../configuration.json):dynamoDBtable}
+        TableName: ${file(configuration.json):dynamoDBtable}
         AttributeDefinitions:
           - AttributeName: id
             AttributeType: S
